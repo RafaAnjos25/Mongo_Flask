@@ -1,10 +1,13 @@
 from pymongo import MongoClient
 from flask import Flask, request, jsonify
 from bson.json_util import dumps
+from dotenv import load_dotenv
+import os
+from bson.objectid import ObjectId
 
-
-
-client = MongoClient('mongodb+srv://rafaelaugusto0112:MaDbI0E1Nw5Difx4@clusterbancodedados.t9q8hma.mongodb.net/')
+load_dotenv()
+mongodb_env = os.environ.get('MONGO')
+client = MongoClient(mongodb_env)
 db = client.get_database("ClusterBancoDeDados")
 colecao = db.get_collection('yshtola')
 
@@ -19,7 +22,9 @@ def registrar():
         novo_usuario = {
             "nome" : data["nome"],
             "telefone" : data["telefone"],
-            "endereco" :  data["endereco"],
+            "rua" :  data["rua"],
+            "bairro" :  data["bairro"],
+            "cidade" :  data["cidade"],
             "filhos" : data["filhos"]
         } 
         colecao.insert_one(novo_usuario)
@@ -44,7 +49,19 @@ def procurar_rua():
     data = request.get_json()
     
     try:
-        usuario = colecao.find({"endereco" : {"rua":data["rua"]}})
+        usuario = colecao.find({"endereco.rua":data["rua"]})
+        lista_usuario = list(usuario)
+        json_data = dumps(lista_usuario, indent = 21)
+        return jsonify(lista_usuario), 200
+    except Exception as e:
+        return jsonify({"ERROR": str(e)}), 400
+    
+@app.route('/Procurar_filhos', methods=["Get"])
+def procurar_filhos():
+    data = request.get_json()
+    
+    try:
+        usuario = colecao.find({"filhos":data["filhos"]})
         lista_usuario = list(usuario)
         json_data = dumps(lista_usuario, indent = 21)
         return jsonify(json_data), 200
